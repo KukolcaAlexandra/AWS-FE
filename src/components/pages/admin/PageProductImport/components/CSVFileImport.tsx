@@ -6,9 +6,14 @@ import axios from "axios";
 type CSVFileImportProps = {
   url: string;
   title: string;
+  setError: (value: { message: string; code: number }) => void;
 };
 
-export default function CSVFileImport({ url, title }: CSVFileImportProps) {
+export default function CSVFileImport({
+  url,
+  title,
+  setError,
+}: CSVFileImportProps) {
   const [file, setFile] = React.useState<File>();
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,27 +29,37 @@ export default function CSVFileImport({ url, title }: CSVFileImportProps) {
   };
 
   const uploadFile = async () => {
-    // Get the presigned URL
-    const response = await axios({
-      method: "GET",
-      url,
-      params: {
-        name: encodeURIComponent(file?.name || ""),
-      },
-      headers: {
-        Authorization: `Basic ${localStorage.getItem("authorization_token")}`,
-      },
-    });
+    try {
+      // Get the presigned URL
+      const response = await axios({
+        method: "GET",
+        url,
+        params: {
+          name: encodeURIComponent(file?.name || ""),
+        },
+        headers: {
+          Authorization: `Basic ${localStorage.getItem("authorization_token")}`,
+        },
+      });
 
-    console.log("File to upload: ", file?.name);
-    console.log("Uploading to: ", response.data);
+      console.log("File to upload: ", file?.name);
+      console.log("Uploading to: ", response.data);
+      console.log("response", response);
 
-    const result = await fetch(response.data, {
-      method: "PUT",
-      body: file,
-    });
-    console.log("Result: ", result);
+      const result = await fetch(response.data, {
+        method: "PUT",
+        body: file,
+      });
+      console.log("Result: ", result);
+    } catch (error: any) {
+      console.log("ERR!!!", error);
+      setError({
+        message: error?.response?.data?.message || "Error",
+        code: error?.response?.status || 500,
+      });
+    }
   };
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
